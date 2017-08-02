@@ -52,11 +52,9 @@ namespace Library
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, LibraryContext libraryContext)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug(LogLevel.Information);
-
             //  loggerFactory.AddProvider(new NLog.Extensions.Logging.NLogLoggerProvider());
-
+            loggerFactory.AddConsole();
+            loggerFactory.AddDebug(LogLevel.Information);
             loggerFactory.AddNLog();
 
             if (env.IsDevelopment())
@@ -89,9 +87,9 @@ namespace Library
             {
                 cfg.CreateMap<Entities.Author, Models.AuthorDto>()
                     .ForMember(dest => dest.Name, opt => opt.MapFrom(src =>
-                        $"{src.FirstName} {src.LastName}"))
+                    $"{src.FirstName} {src.LastName}"))
                     .ForMember(dest => dest.Age, opt => opt.MapFrom(src =>
-                        src.DateOfBirth.GetCurrentAge()));
+                    src.DateOfBirth.GetCurrentAge()));
 
                 cfg.CreateMap<Entities.Book, Models.BookDto>();
 

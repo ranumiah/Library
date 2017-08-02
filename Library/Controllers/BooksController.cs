@@ -235,8 +235,6 @@ namespace Library.Controllers
 
             var bookToPatch = Mapper.Map<BookForUpdateDto>(bookForAuthorFromRepo);
 
-            // add validation
-            
             patchDoc.ApplyTo(bookToPatch, ModelState);
 
             // patchDoc.ApplyTo(bookToPatch);

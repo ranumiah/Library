@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Library.Controllers
 {
-    //[Route("api/[controller]")] ==> If we refactor the class name then we change the resource URI, which is not something we should do in WebApi
     [Route("api/authors")]
     public class AuthorsController : Controller
     {
@@ -20,7 +19,7 @@ namespace Library.Controllers
             _libraryRepository = libraryRepository;
         }
 
-        [HttpGet]
+        [HttpGet()]
         public IActionResult GetAuthors()
         {
             var authorsFromRepo = _libraryRepository.GetAuthors();
@@ -29,7 +28,7 @@ namespace Library.Controllers
             return Ok(authors);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetAuthor")]
         public IActionResult GetAuthor(Guid id)
         {
             var authorFromRepo = _libraryRepository.GetAuthor(id);
@@ -97,6 +96,5 @@ namespace Library.Controllers
 
             return NoContent();
         }
-
     }
 }
