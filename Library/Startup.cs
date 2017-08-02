@@ -1,7 +1,10 @@
 ﻿using Library.Entities;
+using Library.Helpers;
 using Library.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +30,11 @@ namespace Library
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
-            services.AddMvc();
+            services.AddMvc(setupAction =>
+            {
+                setupAction.ReturnHttpNotAcceptable = true;
+                setupAction.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+            });
 
             // register the DbContext on the container, getting the connection string from
             // appSettings (note: use this during development; in a production environment,
@@ -51,8 +58,27 @@ namespace Library
             }
             else
             {
-                app.UseExceptionHandler();
+                app.UseExceptionHandler(appBuilder =>
+                {
+                    appBuilder.Run(async context =>
+                    {
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync("An unexpected fault happened. Try again later.");
+
+                    });
+                });
             }
+
+            AutoMapper.Mapper.Initialize(cfg =>
+            {
+                cfg.CreateMap<Entities.Author, Models.AuthorDto>()
+                    .ForMember(dest => dest.Name, opt => opt.MapFrom(src =>
+                        $"{src.FirstName} {src.LastName}"))
+                    .ForMember(dest => dest.Age, opt => opt.MapFrom(src =>
+                        src.DateOfBirth.GetCurrentAge()));
+
+                cfg.CreateMap<Entities.Book, Models.BookDto>();
+            });
 
             libraryContext.EnsureSeedDataForContext();
 
