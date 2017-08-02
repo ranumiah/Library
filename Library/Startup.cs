@@ -2,6 +2,7 @@
 using Library.Helpers;
 using Library.Services;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 
 namespace Library
 {
@@ -51,7 +53,11 @@ namespace Library
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, LibraryContext libraryContext)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
+            loggerFactory.AddDebug(LogLevel.Information);
+
+            //  loggerFactory.AddProvider(new NLog.Extensions.Logging.NLogLoggerProvider());
+
+            loggerFactory.AddNLog();
 
             if (env.IsDevelopment())
             {
@@ -63,6 +69,15 @@ namespace Library
                 {
                     appBuilder.Run(async context =>
                     {
+                        var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
+                        if (exceptionHandlerFeature != null)
+                        {
+                            var logger = loggerFactory.CreateLogger("Global exception logger");
+                            logger.LogError(500,
+                                exceptionHandlerFeature.Error,
+                                exceptionHandlerFeature.Error.Message);
+                        }
+
                         context.Response.StatusCode = 500;
                         await context.Response.WriteAsync("An unexpected fault happened. Try again later.");
 
@@ -83,10 +98,14 @@ namespace Library
                 cfg.CreateMap<Models.AuthorForCreationDto, Entities.Author>();
 
                 cfg.CreateMap<Models.BookForCreationDto, Entities.Book>();
+
+                cfg.CreateMap<Models.BookForUpdateDto, Entities.Book>();
+
+                cfg.CreateMap<Entities.Book, Models.BookForUpdateDto>();
             });
 
-            libraryContext.EnsureSeedDataForContext();
 
+            libraryContext.EnsureSeedDataForContext();
 
             app.UseMvc();
         }
