@@ -7,6 +7,7 @@ using Library.Models;
 using Library.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Library.Controllers
 {
@@ -17,21 +18,26 @@ namespace Library.Controllers
         private IUrlHelper _urlHelper;
         private IPropertyMappingService _propertyMappingService;
         private ITypeHelperService _typeHelperService;
+        private readonly ILogger<AuthorsController> _logger;
 
         public AuthorsController(ILibraryRepository libraryRepository,
             IUrlHelper urlHelper,
             IPropertyMappingService propertyMappingService,
-            ITypeHelperService typeHelperService)
+            ITypeHelperService typeHelperService,
+            ILogger<AuthorsController> logger)
         {
             _libraryRepository = libraryRepository;
             _urlHelper = urlHelper;
             _propertyMappingService = propertyMappingService;
             _typeHelperService = typeHelperService;
+            _logger = logger;
         }
 
         [HttpGet(Name = "GetAuthors")]
         public IActionResult GetAuthors(AuthorsResourceParameters authorsResourceParameters)
         {
+            _logger.LogInformation($"Getting All Authors");
+
             if (!_propertyMappingService.ValidMappingExistsFor<AuthorDto, Author>
                (authorsResourceParameters.OrderBy))
             {
@@ -43,6 +49,7 @@ namespace Library.Controllers
             {
                 return BadRequest();
             }
+            ;
 
             var authorsFromRepo = _libraryRepository.GetAuthors(authorsResourceParameters);
 
@@ -117,6 +124,8 @@ namespace Library.Controllers
         [HttpGet("{id}", Name = "GetAuthor")]
         public IActionResult GetAuthor(Guid id, [FromQuery] string fields)
         {
+            _logger.LogInformation($"Getting Author {id}");
+
             if (!_typeHelperService.TypeHasProperties<AuthorDto>
               (fields))
             {
@@ -154,6 +163,8 @@ namespace Library.Controllers
 
             var authorToReturn = Mapper.Map<AuthorDto>(authorEntity);
 
+            _logger.LogInformation($"Created Author: {authorToReturn.Name}");
+
             return CreatedAtRoute("GetAuthor",
                 new { id = authorToReturn.Id },
                 authorToReturn);
@@ -185,6 +196,8 @@ namespace Library.Controllers
             {
                 throw new Exception($"Deleting author {id} failed on save.");
             }
+
+            _logger.LogInformation($"Deleted Author: {id}");
 
             return NoContent();
         }

@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Serialization;
 using NLog.Extensions.Logging;
+using NLog.Web;
 
 namespace Library
 {
@@ -22,6 +23,8 @@ namespace Library
     {
         public Startup(IHostingEnvironment env)
         {
+            env.ConfigureNLog("nlog.config");
+            
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -35,6 +38,9 @@ namespace Library
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //call this in case you need aspnet-user-authtype/aspnet-user-identity
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            
             // Add framework services.
             services.AddMvc(setupAction =>
                 {
@@ -77,9 +83,16 @@ namespace Library
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, LibraryContext libraryContext)
         {
             //loggerFactory.AddProvider(new NLog.Extensions.Logging.NLogLoggerProvider());
+
             loggerFactory.AddConsole();
             loggerFactory.AddDebug(LogLevel.Information);
+            //loggerFactory.AddNLog();
+
+            //add NLog to ASP.NET Core
             loggerFactory.AddNLog();
+
+            //add NLog.Web
+            app.AddNLogWeb();
 
             if (env.IsDevelopment())
             {

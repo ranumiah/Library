@@ -7,6 +7,7 @@ using Library.Helpers;
 using Library.Models;
 using Library.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Library.Controllers
 {
@@ -14,10 +15,12 @@ namespace Library.Controllers
     public class AuthorCollectionsController : Controller
     {
         private ILibraryRepository _libraryRepository;
+        private readonly ILogger<AuthorsController> _logger;
 
-        public AuthorCollectionsController(ILibraryRepository libraryRepository)
+        public AuthorCollectionsController(ILibraryRepository libraryRepository, ILogger<AuthorsController> logger)
         {
             _libraryRepository = libraryRepository;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -45,10 +48,11 @@ namespace Library.Controllers
             var idsAsString = string.Join(",",
                 authorCollectionToReturn.Select(a => a.Id));
 
+            _logger.LogInformation("Creating an author collection completed");
+
             return CreatedAtRoute("GetAuthorCollection",
                 new { ids = idsAsString },
                 authorCollectionToReturn);
-            //return Ok();
         }
 
         // Composite Key ==> api/authorcollections/(key1=value1,key2=value2, ...)
@@ -56,6 +60,8 @@ namespace Library.Controllers
         public IActionResult GetAuthorCollection(
             [ModelBinder(BinderType = typeof(ArrayModelBinder))] IEnumerable<Guid> ids)
         {
+            _logger.LogInformation("Attempting to get author collection using composite keys");
+
             if (ids == null)
             {
                 return BadRequest();
@@ -69,6 +75,7 @@ namespace Library.Controllers
             }
 
             var authorsToReturn = Mapper.Map<IEnumerable<AuthorDto>>(authorEntities);
+
             return Ok(authorsToReturn);
         }
     }

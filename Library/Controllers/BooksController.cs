@@ -14,8 +14,8 @@ namespace Library.Controllers
     [Route("api/authors/{authorId}/books")]
     public class BooksController : Controller
     {
-        private ILibraryRepository _libraryRepository;
-        private ILogger<BooksController> _logger;
+        private readonly ILibraryRepository _libraryRepository;
+        private readonly ILogger<BooksController> _logger;
 
         public BooksController(ILibraryRepository libraryRepository,
             ILogger<BooksController> logger)
@@ -27,6 +27,7 @@ namespace Library.Controllers
         [HttpGet()]
         public IActionResult GetBooksForAuthor(Guid authorId)
         {
+            _logger.LogInformation($"Getting Book For Author {authorId}");
             if (!_libraryRepository.AuthorExists(authorId))
             {
                 return NotFound();
@@ -42,6 +43,7 @@ namespace Library.Controllers
         [HttpGet("{id}", Name = "GetBookForAuthor")]
         public IActionResult GetBookForAuthor(Guid authorId, Guid id)
         {
+            _logger.LogInformation($"Getting Book {id} For Author {authorId}");
             if (!_libraryRepository.AuthorExists(authorId))
             {
                 return NotFound();
@@ -93,6 +95,8 @@ namespace Library.Controllers
             }
 
             var bookToReturn = Mapper.Map<BookDto>(bookEntity);
+
+            _logger.LogInformation($"New Book {bookToReturn.Title} Added to Author {authorId}");
 
             return CreatedAtRoute("GetBookForAuthor",
                 new { authorId = authorId, id = bookToReturn.Id },
@@ -180,6 +184,8 @@ namespace Library.Controllers
                 throw new Exception($"Updating book {id} for author {authorId} failed on save.");
             }
 
+            _logger.LogInformation($"Updating book {id} for author {authorId} completed.");
+
             return NoContent();
         }
 
@@ -236,8 +242,6 @@ namespace Library.Controllers
             var bookToPatch = Mapper.Map<BookForUpdateDto>(bookForAuthorFromRepo);
 
             patchDoc.ApplyTo(bookToPatch, ModelState);
-
-            // patchDoc.ApplyTo(bookToPatch);
 
             if (bookToPatch.Description == bookToPatch.Title)
             {
